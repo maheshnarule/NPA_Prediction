@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result | NPA Predictor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .risk-card {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .risk-header {
+            padding: 1.5rem;
+            color: white;
+        }
+
+        .risk-low {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .risk-medium {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .risk-high {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .suggestion-card {
+            border-left: 4px solid #0d6efd;
+            background: #f8f9fa;
+        }
+
+        .detail-row {
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 0;
+        }
+
+        .progress {
+            height: 25px;
+            border-radius: 12px;
+        }
+
+        .progress-bar {
+            border-radius: 12px;
+        }
+
+        .manager-suggestion {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .suggestion-type-tenure {
+            border-left-color: #28a745 !important;
+        }
+
+        .suggestion-type-interest {
+            border-left-color: #fd7e14 !important;
+        }
+
+        .suggestion-type-amount {
+            border-left-color: #17a2b8 !important;
+        }
+
+        .suggestion-type-security {
+            border-left-color: #dc3545 !important;
+        }
+
+        .suggestion-type-staged {
+            border-left-color: #6f42c1 !important;
+        }
+
+        .max-term-badge {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> NPA Risk Predictor
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a class="nav-link" href="/predict">
+                    <i class="fas fa-calculator"></i> New Prediction
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold">Prediction Result</h1>
+                    <p class="lead text-muted">Risk assessment completed on {{ result.timestamp }}</p>
+                    <div class="max-term-badge d-inline-block mb-3">
+                        <i class="fas fa-clock me-1"></i> Maximum Loan Term: 300 months (25 years)
+                    </div>
+                </div>
+
+                <!-- Risk Score Card -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-{{ result.risk_color }} text-white">
+                        <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Risk Assessment Summary</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 text-center">
+                                <div class="risk-score-circle risk-{{ result.risk_level|lower }}">
+                                    <div class="score-number">{{ result.risk_score }}%</div>
+                                    <div class="score-label">Risk Score</div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <h3 class="text-{{ result.risk_color }}">{{ result.prediction }}</h3>
+                                <div class="mb-3">
+                                    <span class="badge bg-{{ result.risk_color }} fs-6">{{ result.risk_level }}
+                                        Risk</span>
+                                    <span class="badge bg-info ms-2 fs-6">{{ result.confidence }}% Confidence</span>
+                                    {% if result.is_high_risk %}
+                                    <span class="badge bg-danger ms-2 fs-6">High-Risk Customer</span>
+                                    {% endif %}
+                                </div>
+                                <p class="lead">{{ result.recommendation }}</p>
+                                <div class="alert alert-{{ result.risk_color }}">
+                                    <strong><i class="fas fa-info-circle"></i> Default Probability:</strong>
+                                    {{ result.default_probability }}%
+                                </div>
+                                <div class="progress mb-3">
+                                    {% set width = result.default_probability %}
+                                    <div class="progress-bar {% if width < 20 %}bg-success{% elif width < 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                        role="progressbar" style="width: {{ width }}%">
+                                        {{ "%.1f"|format(width) }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0"><i class="fas fa-lightbulb"></i> Recommendations</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for recommendation in result.specific_recommendations %}
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> {{ recommendation }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                {% if result.is_high_risk %}
+                <!-- Manager Suggestions Section -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0"><i class="fas fa-user-tie me-2"></i> Manager Suggestions (High-Risk Customer)
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note to Manager:</strong> This customer is identified as high-risk (score: {{
+                            result.risk_score }}%).
+                            Consider the following adjustments to make the loan viable while managing risk.
+                        </div>
+
+                        <div class="row">
+                            {% for suggestion in result.manager_suggestions %}
+                            <div class="col-md-6 mb-4">
+                                <div
+                                    class="card h-100 border-0 shadow-sm suggestion-type-{{ suggestion.type|replace('_', '-') }}">
+                                    <div class="card-header 
+                                        {% if suggestion.type == 'tenure_extension' %}bg-success
+                                        {% elif suggestion.type == 'interest_adjustment' %}bg-warning
+                                        {% elif suggestion.type == 'amount_reduction' %}bg-info
+                                        {% elif suggestion.type == 'security_requirement' %}bg-danger
+                                        {% elif suggestion.type == 'staged_disbursement' %}bg-purple
+                                        {% else %}bg-primary{% endif %} text-white">
+                                        <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i> {{ suggestion.title }}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">{{ suggestion.description }}</p>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered">
+                                                {% if suggestion.type == 'tenure_extension' %}
+                                                <tr>
+                                                    <td><strong>Current Term:</strong></td>
+                                                    <td>{{ suggestion.current_term }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Suggested Term:</strong></td>
+                                                    <td>{{ suggestion.suggested_term }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Current EMI:</strong></td>
+                                                    <td>{{ suggestion.current_payment }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>New EMI:</strong></td>
+                                                    <td>{{ suggestion.new_payment }}</td>
+                                                </tr>
+                                                <tr class="table-success">
+                                                    <td><strong>EMI Reduction:</strong></td>
+                                                    <td>{{ suggestion.payment_reduction }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Payment-to-Income:</strong></td>
+                                                    <td>{{ suggestion.payment_to_income }}</td>
+                                                </tr>
+
+                                                {% elif suggestion.type == 'interest_adjustment' %}
+                                                <tr>
+                                                    <td><strong>Current Rate:</strong></td>
+                                                    <td>{{ suggestion.current_rate }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Suggested Rate:</strong></td>
+                                                    <td>{{ suggestion.suggested_rate }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Rate Increase:</strong></td>
+                                                    <td>{{ suggestion.rate_increase }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Current EMI:</strong></td>
+                                                    <td>{{ suggestion.current_payment }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>New EMI:</strong></td>
+                                                    <td>{{ suggestion.new_payment }}</td>
+                                                </tr>
+                                                <tr class="table-warning">
+                                                    <td><strong>EMI Increase:</strong></td>
+                                                    <td>{{ suggestion.payment_increase }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Additional Interest:</strong></td>
+                                                    <td>{{ suggestion.additional_total_interest }}</td>
+                                                </tr>
+
+                                                {% elif suggestion.type == 'amount_reduction' %}
+                                                <tr>
+                                                    <td><strong>Current Amount:</strong></td>
+                                                    <td>{{ suggestion.current_amount }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Suggested Amount:</strong></td>
+                                                    <td>{{ suggestion.suggested_amount }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Amount Reduction:</strong></td>
+                                                    <td>{{ suggestion.amount_reduction }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Current EMI:</strong></td>
+                                                    <td>{{ suggestion.current_payment }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>New EMI:</strong></td>
+                                                    <td>{{ suggestion.new_payment }}</td>
+                                                </tr>
+                                                <tr class="table-info">
+                                                    <td><strong>EMI Reduction:</strong></td>
+                                                    <td>{{ suggestion.payment_reduction }}</td>
+                                                </tr>
+
+                                                {% elif suggestion.type == 'security_requirement' %}
+                                                <tr>
+                                                    <td><strong>Current Status:</strong></td>
+                                                    <td>{{ suggestion.current_status }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Collateral Required:</strong></td>
+                                                    <td>{{ suggestion.collateral_amount }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Collateral Percentage:</strong></td>
+                                                    <td>{{ suggestion.collateral_percentage }}</td>
+                                                </tr>
+                                                <tr class="table-danger">
+                                                    <td><strong>Recommendation:</strong></td>
+                                                    <td>{{ suggestion.recommendation }}</td>
+                                                </tr>
+
+                                                {% elif suggestion.type == 'staged_disbursement' %}
+                                                <tr>
+                                                    <td colspan="2"><strong>Disbursement Stages:</strong></td>
+                                                </tr>
+                                                {% for stage in suggestion.stages %}
+                                                <tr>
+                                                    <td colspan="2">{{ stage }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-primary">
+                                                    <td><strong>Recommendation:</strong></td>
+                                                    <td>{{ suggestion.recommendation }}</td>
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {% if suggestion.type == 'tenure_extension' %}
+                                                Extending tenure reduces EMI burden, improving affordability within
+                                                300-month maximum
+                                                {% elif suggestion.type == 'interest_adjustment' %}
+                                                Higher rate compensates for increased default risk
+                                                {% elif suggestion.type == 'amount_reduction' %}
+                                                Smaller loan reduces repayment pressure
+                                                {% elif suggestion.type == 'security_requirement' %}
+                                                Additional security reduces lender exposure
+                                                {% elif suggestion.type == 'staged_disbursement' %}
+                                                Phased disbursement mitigates risk for large loans
+                                                {% else %}
+                                                Custom adjustment based on risk profile
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i> Manager Action Required:</h6>
+                                <ul class="mb-0">
+                                    <li>Review all suggested adjustments carefully</li>
+                                    <li>Consider customer's overall financial profile</li>
+                                    <li>Ensure loan term does not exceed 300 months (25 years)</li>
+                                    <li>Document rationale for any changes made</li>
+                                    <li>Ensure compliance with lending policies</li>
+                                    <li>Monitor high-risk accounts more frequently</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Input Data Summary -->
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-list-alt"></i> Application Summary</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Personal Information</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Loan Number:</strong></td>
+                                        <td>{{ input_data.LoanNumber }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Customer Name:</strong></td>
+                                        <td>{{ input_data.CustomerName }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Age:</strong></td>
+                                        <td>{{ input_data.Age }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Marital Status:</strong></td>
+                                        <td>{{ input_data.MaritalStatus }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dependents:</strong></td>
+                                        <td>{{ input_data.HasDependents }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Employment & Financial</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Employment:</strong></td>
+                                        <td>{{ input_data.EmploymentType }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Months Employed:</strong></td>
+                                        <td>{{ input_data.MonthsEmployed }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Monthly Income:</strong></td>
+                                        <td>₹{{ "{:,.2f}".format(input_data.MonthlyIncome|float) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Annual Income:</strong></td>
+                                        <td>₹{{ "{:,.2f}".format(input_data.AnnualIncome|float) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Credit Score:</strong></td>
+                                        <td>{{ input_data.CreditScore }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Loan Details</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Loan Amount:</strong></td>
+                                        <td>₹{{ "{:,.2f}".format(input_data.LoanAmount|float) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Interest Rate:</strong></td>
+                                        <td>{{ input_data.InterestRate }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Loan Term:</strong></td>
+                                        <td>
+                                            {{ input_data.LoanTerm }} months
+                                            {% if input_data.LoanTerm|int > 240 %}
+                                            <span class="badge bg-warning ms-2">Long term</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Loan Purpose:</strong></td>
+                                        <td>{{ input_data.LoanPurpose }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Financial Ratios</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>DTI Ratio:</strong></td>
+                                        <td>{{ (input_data.DTIRatio|float * 100)|round(2) }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Credit Lines:</strong></td>
+                                        <td>{{ input_data.NumCreditLines }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Has Mortgage:</strong></td>
+                                        <td>{{ input_data.HasMortgage }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Has Co-Signer:</strong></td>
+                                        <td>{{ input_data.HasCoSigner }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-center mt-4">
+                    <div class="btn-group" role="group">
+                        <a href="/predict" class="btn btn-primary">
+                            <i class="fas fa-redo"></i> New Prediction
+                        </a>
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-home"></i> Back to Home
+                        </a>
+                        <button class="btn btn-outline-success" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 NPA Risk Predictor. Maximum loan term: 300 months (25 years). This assessment is
+                for informational purposes only.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add CSS for risk score circles if not already in style.css
+        const style = document.createElement('style');
+        style.textContent = `
+            .risk-score-circle {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin: 0 auto;
+                color: white;
+                font-weight: bold;
+            }
+            .risk-low {
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            }
+            .risk-medium {
+                background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            }
+            .risk-high {
+                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            }
+            .score-number {
+                font-size: 2.5rem;
+                font-weight: 700;
+            }
+            .score-label {
+                font-size: 1rem;
+                opacity: 0.9;
+            }
+            .bg-purple {
+                background-color: #6f42c1 !important;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

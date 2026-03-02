@@ -1,0 +1,16 @@
+{
+  "accuracy": 0.8245545329939299,
+  "roc_auc": 0.7330270678751696,
+  "training_samples": 20428,
+  "test_samples": 5107,
+  "features_count": 31,
+  "model_type": "RandomForestClassifier",
+  "parameters": {
+    "n_estimators": 50,
+    "max_depth": 10,
+    "min_samples_split": 10,
+    "min_samples_leaf": 4
+  },
+  "timestamp": "2025-12-16T16:40:56.888133",
+  "note": "Trained on 10% sample for speed"
+}

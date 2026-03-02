@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict NPA Risk | NPA Predictor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .section-header {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .risk-indicator {
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #28a745 0%, #ffc107 50%, #dc3545 100%);
+            margin-top: 5px;
+            position: relative;
+        }
+
+        .risk-marker {
+            position: absolute;
+            top: -5px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 3px solid #0d6efd;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            transition: left 0.3s ease;
+        }
+
+        .prediction-card {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .prediction-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .input-group-text {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        .progress {
+            height: 25px;
+            border-radius: 12px;
+        }
+
+        .progress-bar {
+            border-radius: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt me-2"></i> NPA Risk Predictor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home me-1"></i> Home
+                    </a>
+                    <a class="nav-link active" href="/predict">
+                        <i class="fas fa-calculator me-1"></i> Predict
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold text-primary">Loan Default Risk Assessment</h1>
+                    <p class="lead text-muted">Enter loan application details to assess Non-Performing Asset (NPA) risk
+                        probability</p>
+                    <div class="alert alert-light d-inline-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <span>Fields marked with * are required</span>
+                    </div>
+                </div>
+
+                <!-- Prediction Result Display -->
+                {% if prediction %}
+                <div class="card prediction-card border-0 mb-4">
+                    <div class="card-header bg-gradient text-white"
+                        style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                        <h4 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Prediction Result</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title">Risk Assessment</h5>
+                                <div class="d-flex align-items-center mb-3">
+                                    {% set risk_level = prediction.risk_level %}
+                                    {% set badge_class = 'bg-success' if risk_level == 'Low' else 'bg-warning' if
+                                    risk_level == 'Medium' else 'bg-danger' %}
+                                    <span class="badge {{ badge_class }} rounded-pill me-3 px-3 py-2">
+                                        {{ risk_level }} Risk
+                                    </span>
+                                    <span class="h4 mb-0">{{ "%.1f"|format(prediction.probability * 100) }}%</span>
+                                </div>
+
+                                <!-- Risk Indicator -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Low</small>
+                                        <small>Medium</small>
+                                        <small>High</small>
+                                    </div>
+                                    <div class="risk-indicator">
+                                        {% set left_position = prediction.probability * 100 %}
+                                        <div class="risk-marker" style="left: {{ left_position }}%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress mb-3">
+                                    {% set width = prediction.probability * 100 %}
+                                    <div class="progress-bar {% if width < 30 %}bg-success{% elif width < 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                                        role="progressbar" style="width: {{ width }}%">
+                                        {{ "%.1f"|format(width) }}%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="border-bottom pb-2">Recommendations:</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for rec in prediction.recommendations %}
+                                    <li class="list-group-item border-0 px-0 py-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        {{ rec }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="/predict" class="btn btn-outline-primary">
+                                <i class="fas fa-redo me-1"></i> Make Another Prediction
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Error Message -->
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Prediction Error</h6>
+                            <p class="mb-0">{{ error }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <!-- Prediction Form -->
+                <div class="card prediction-card border-0">
+                    <div class="card-header bg-gradient text-white"
+                        style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                        <h4 class="mb-0"><i class="fas fa-edit me-2"></i> Loan Application Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/predict" id="predictionForm" novalidate>
+                            <!-- Personal Information -->
+                            <div class="form-section">
+                                <h5 class="section-header mb-4">
+                                    <i class="fas fa-user-circle text-primary me-2"></i> Personal Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Loan Number</label>
+                                        <input type="text" class="form-control" name="LoanNumber"
+                                            placeholder="Enter loan number" required
+                                            value="{{ request.form.LoanNumber if request.form }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Customer Name</label>
+                                        <input type="text" class="form-control" name="CustomerName"
+                                            placeholder="Enter full name" required
+                                            value="{{ request.form.CustomerName if request.form }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Age</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="Age" min="18" max="100"
+                                                required value="{{ request.form.Age if request.form }}">
+                                            <span class="input-group-text">years</span>
+                                        </div>
+                                        <div class="form-text">Applicant must be 18 years or older</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Marital Status</label>
+                                        <select class="form-select" name="MaritalStatus" required>
+                                            <option value="">Select marital status...</option>
+                                            <option value="Single" {{ 'selected' if request.form.MaritalStatus=='Single'
+                                                }}>Single</option>
+                                            <option value="Married" {{ 'selected' if
+                                                request.form.MaritalStatus=='Married' }}>Married</option>
+                                            <option value="Divorced" {{ 'selected' if
+                                                request.form.MaritalStatus=='Divorced' }}>Divorced</option>
+                                            <option value="Widowed" {{ 'selected' if
+                                                request.form.MaritalStatus=='Widowed' }}>Widowed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Has Dependents?</label>
+                                        <select class="form-select" name="HasDependents" required>
+                                            <option value="">Select...</option>
+                                            <option value="Yes" {{ 'selected' if request.form.HasDependents=='Yes' }}>
+                                                Yes</option>
+                                            <option value="No" {{ 'selected' if request.form.HasDependents=='No' }}>No
+                                            </option>
+                                        </select>
+                                        <div class="form-text">Number of financial dependents</div>
+                                    </div>
+                                    <!-- Removed Education field as per feature importance analysis -->
+                                </div>
+                            </div>
+
+                            <!-- Employment Information -->
+                            <div class="form-section">
+                                <h5 class="section-header mb-4">
+                                    <i class="fas fa-briefcase text-success me-2"></i> Employment Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Employment Type</label>
+                                        <select class="form-select" name="EmploymentType" required>
+                                            <option value="">Select employment type...</option>
+                                            <option value="Full-time" {{ 'selected' if
+                                                request.form.EmploymentType=='Full-time' }}>Full-time</option>
+                                            <option value="Part-time" {{ 'selected' if
+                                                request.form.EmploymentType=='Part-time' }}>Part-time</option>
+                                            <option value="Self-employed" {{ 'selected' if
+                                                request.form.EmploymentType=='Self-employed' }}>Self-employed</option>
+                                            <option value="Contract" {{ 'selected' if
+                                                request.form.EmploymentType=='Contract' }}>Contract</option>
+                                            <option value="Unemployed" {{ 'selected' if
+                                                request.form.EmploymentType=='Unemployed' }}>Unemployed</option>
+                                            <option value="Retired" {{ 'selected' if
+                                                request.form.EmploymentType=='Retired' }}>Retired</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Months Employed</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="MonthsEmployed" min="0"
+                                                max="600" required
+                                                value="{{ request.form.MonthsEmployed if request.form }}">
+                                            <span class="input-group-text">months</span>
+                                        </div>
+                                        <div class="form-text">Duration at current employment</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Monthly Income</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" name="MonthlyIncome" min="0"
+                                                step="100" required
+                                                value="{{ request.form.MonthlyIncome if request.form }}">
+                                            <span class="input-group-text">per month</span>
+                                        </div>
+                                        <div class="form-text" id="annualIncomeDisplay">
+                                            Annual income: ₹<span id="annualIncomeValue">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Industry</label>
+                                        <select class="form-select" name="Industry">
+                                            <option value="">Select industry...</option>
+                                            <option value="Technology" {{ 'selected' if
+                                                request.form.Industry=='Technology' }}>Technology</option>
+                                            <option value="Finance" {{ 'selected' if request.form.Industry=='Finance'
+                                                }}>Finance</option>
+                                            <option value="Healthcare" {{ 'selected' if
+                                                request.form.Industry=='Healthcare' }}>Healthcare</option>
+                                            <option value="Education" {{ 'selected' if
+                                                request.form.Industry=='Education' }}>Education</option>
+                                            <option value="Manufacturing" {{ 'selected' if
+                                                request.form.Industry=='Manufacturing' }}>Manufacturing</option>
+                                            <option value="Retail" {{ 'selected' if request.form.Industry=='Retail' }}>
+                                                Retail</option>
+                                            <option value="Other" {{ 'selected' if request.form.Industry=='Other' }}>
+                                                Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Information -->
+                            <div class="form-section">
+                                <h5 class="section-header mb-4">
+                                    <i class="fas fa-chart-line text-info me-2"></i> Financial Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Credit Score</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="CreditScore" min="650"
+                                                max="850" required
+                                                value="{{ request.form.CreditScore if request.form }}">
+                                            <span class="input-group-text">points</span>
+                                        </div>
+                                        <div class="form-text">
+                                            <span class="badge bg-success">Excellent: 750+</span>
+                                            <span class="badge bg-warning">Good: 650-749</span>
+                                            <span class="badge bg-danger">Poor: below 650</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Debt-to-Income Ratio</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="DTIRatio" min="0.01"
+                                                max="1.0" step="0.01" required
+                                                value="{{ request.form.DTIRatio if request.form }}">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="form-text">Monthly debt payments ÷ Monthly income</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Number of Credit Lines</label>
+                                        <input type="number" class="form-control" name="NumCreditLines" min="0" max="20"
+                                            required value="{{ request.form.NumCreditLines if request.form }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Has Mortgage?</label>
+                                        <select class="form-select" name="HasMortgage" required>
+                                            <option value="">Select...</option>
+                                            <option value="Yes" {{ 'selected' if request.form.HasMortgage=='Yes' }}>Yes
+                                            </option>
+                                            <option value="No" {{ 'selected' if request.form.HasMortgage=='No' }}>No
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Total Debt</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" name="TotalDebt" min="0"
+                                                value="{{ request.form.TotalDebt if request.form }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Savings Balance</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" name="Savings" min="0"
+                                                value="{{ request.form.Savings if request.form }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Loan Details -->
+                            <div class="form-section">
+                                <h5 class="section-header mb-4">
+                                    <i class="fas fa-file-invoice-dollar text-warning me-2"></i> Loan Details
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Loan Amount</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" name="LoanAmount" min="0" required
+                                                value="{{ request.form.LoanAmount if request.form }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Interest Rate</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="InterestRate" min="0"
+                                                max="30" step="0.01" required
+                                                value="{{ request.form.InterestRate if request.form }}">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Loan Term</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="LoanTerm" min="1" max="300"
+                                                required value="{{ request.form.LoanTerm if request.form }}">
+                                            <span class="input-group-text">months</span>
+                                        </div>
+                                        <div class="form-text">1 month to 25 years (300 months maximum)</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Loan Purpose</label>
+                                        <select class="form-select" name="LoanPurpose" required>
+                                            <option value="">Select loan purpose...</option>
+                                            <option value="Auto" {{ 'selected' if request.form.LoanPurpose=='Auto' }}>
+                                                Auto Loan</option>
+                                            <option value="Home" {{ 'selected' if request.form.LoanPurpose=='Home' }}>
+                                                Home Loan/Mortgage</option>
+                                            <option value="Business" {{ 'selected' if
+                                                request.form.LoanPurpose=='Business' }}>Business Loan</option>
+                                            <option value="Education" {{ 'selected' if
+                                                request.form.LoanPurpose=='Education' }}>Education Loan</option>
+                                            <option value="Personal" {{ 'selected' if
+                                                request.form.LoanPurpose=='Personal' }}>Personal Loan</option>
+                                            <option value="Debt Consolidation" {{ 'selected' if
+                                                request.form.LoanPurpose=='Debt Consolidation' }}>Debt Consolidation
+                                            </option>
+                                            <option value="Other" {{ 'selected' if request.form.LoanPurpose=='Other' }}>
+                                                Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-field">Has Co-Signer?</label>
+                                        <select class="form-select" name="HasCoSigner" required>
+                                            <option value="">Select...</option>
+                                            <option value="Yes" {{ 'selected' if request.form.HasCoSigner=='Yes' }}>Yes
+                                            </option>
+                                            <option value="No" {{ 'selected' if request.form.HasCoSigner=='No' }}>No
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Previous Defaults</label>
+                                        <input type="number" class="form-control" name="PreviousDefaults" min="0"
+                                            max="10" value="{{ request.form.PreviousDefaults if request.form }}">
+                                        <div class="form-text">Number of previous loan defaults</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                                <button type="reset" class="btn btn-outline-secondary px-4">
+                                    <i class="fas fa-redo me-2"></i> Clear All
+                                </button>
+                                <button type="button" class="btn btn-outline-info px-4" onclick="fillSampleData()">
+                                    <i class="fas fa-flask me-2"></i> Sample Data
+                                </button>
+                                <button type="submit" class="btn btn-primary px-5" id="submitBtn">
+                                    <i class="fas fa-calculator me-2"></i> Predict Risk
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Information & Features -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-info-circle text-primary me-2"></i> How it works
+                                </h5>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> AI-powered risk
+                                        analysis</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Real-time prediction
+                                        engine</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Top 10 risk factors
+                                        analyzed</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Industry-grade
+                                        algorithms</li>
+                                    <li><i class="fas fa-check text-success me-2"></i> Actionable recommendations</li>
+                                    <li><i class="fas fa-check text-success me-2"></i> Manager suggestions for high-risk
+                                        cases</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-shield-alt text-success me-2"></i> Data Security & Limits
+                                </h5>
+                                <p class="card-text">
+                                    <i class="fas fa-lock me-2"></i> All data is encrypted in transit and at rest
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-user-shield me-2"></i> Compliant with financial regulations
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-clock me-2"></i> Maximum loan term: 300 months (25 years)
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-history me-2"></i> No data stored without consent
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-exclamation-circle me-1"></i> For financial institution use only
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6 class="mb-3">NPA Risk Predictor</h6>
+                    <p class="mb-0">Advanced AI solution for predicting loan default risks and minimizing Non-Performing
+                        Assets.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <p class="mb-1">&copy; 2024 NPA Risk Predictor</p>
+                    <small>Version 2.2.0 | Max loan term: 300 months | For financial institutions only</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        document.getElementById('predictionForm').addEventListener('submit', function (e) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+            submitBtn.disabled = true;
+
+            // Validate DTI Ratio
+            const dtiInput = document.querySelector('input[name="DTIRatio"]');
+            if (dtiInput) {
+                const dtiValue = parseFloat(dtiInput.value);
+                if (dtiValue < 0.01 || dtiValue > 1.0) {
+                    e.preventDefault();
+                    alert('DTI Ratio must be between 0.01 and 1.0');
+                    submitBtn.innerHTML = '<i class="fas fa-calculator me-2"></i> Predict Risk';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+
+            // Validate loan term (300 months maximum)
+            const termInput = document.querySelector('input[name="LoanTerm"]');
+            if (termInput) {
+                const termValue = parseInt(termInput.value);
+                if (termValue < 1 || termValue > 300) {
+                    e.preventDefault();
+                    alert('Loan term must be between 1 and 300 months (25 years maximum)');
+                    submitBtn.innerHTML = '<i class="fas fa-calculator me-2"></i> Predict Risk';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+
+            // Validate credit score
+            const creditScoreInput = document.querySelector('input[name="CreditScore"]');
+            if (creditScoreInput) {
+                const creditScoreValue = parseInt(creditScoreInput.value);
+                if (creditScoreValue < 650 || creditScoreValue > 850) {
+                    e.preventDefault();
+                    alert('Credit Score must be between 650 and 850');
+                    submitBtn.innerHTML = '<i class="fas fa-calculator me-2"></i> Predict Risk';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+
+            // Validate age
+            const ageInput = document.querySelector('input[name="Age"]');
+            if (ageInput) {
+                const ageValue = parseInt(ageInput.value);
+                if (ageValue < 18 || ageValue > 100) {
+                    e.preventDefault();
+                    alert('Age must be between 18 and 100 years');
+                    submitBtn.innerHTML = '<i class="fas fa-calculator me-2"></i> Predict Risk';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+        });
+
+        // Sample data filler
+        function fillSampleData() {
+            document.querySelector('input[name="LoanNumber"]').value = "LN-" + Math.floor(Math.random() * 10000);
+            document.querySelector('input[name="CustomerName"]').value = "John Doe";
+            document.querySelector('input[name="Age"]').value = 35;
+            document.querySelector('select[name="MaritalStatus"]').value = "Married";
+            document.querySelector('select[name="HasDependents"]').value = "Yes";
+            document.querySelector('select[name="EmploymentType"]').value = "Full-time";
+            document.querySelector('input[name="MonthsEmployed"]').value = 48;
+            document.querySelector('input[name="MonthlyIncome"]').value = 75000;
+            document.querySelector('select[name="Industry"]').value = "Technology";
+            document.querySelector('input[name="CreditScore"]').value = 720;
+            document.querySelector('input[name="DTIRatio"]').value = 0.35;
+            document.querySelector('input[name="NumCreditLines"]').value = 4;
+            document.querySelector('select[name="HasMortgage"]').value = "Yes";
+            document.querySelector('input[name="LoanAmount"]').value = 25000;
+            document.querySelector('input[name="InterestRate"]').value = 7.5;
+            document.querySelector('input[name="LoanTerm"]').value = 60;
+            document.querySelector('select[name="LoanPurpose"]').value = "Auto";
+            document.querySelector('select[name="HasCoSigner"]').value = "No";
+
+            // Trigger annual income calculation
+            const monthlyIncomeInput = document.querySelector('input[name="MonthlyIncome"]');
+            if (monthlyIncomeInput) {
+                monthlyIncomeInput.dispatchEvent(new Event('input'));
+            }
+
+            alert('Sample data loaded. You can now submit for prediction.');
+        }
+
+        // Real-time validation
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', function () {
+                const min = parseFloat(this.min);
+                const max = parseFloat(this.max);
+                const value = parseFloat(this.value);
+
+                if (!isNaN(min) && !isNaN(value) && value < min) {
+                    this.value = min;
+                }
+                if (!isNaN(max) && !isNaN(value) && value > max) {
+                    this.value = max;
+                }
+            });
+        });
+
+        // Annual income calculation
+        document.querySelector('input[name="MonthlyIncome"]').addEventListener('input', function () {
+            const monthlyIncome = parseFloat(this.value) || 0;
+            const annualIncome = monthlyIncome * 12;
+            document.getElementById('annualIncomeValue').textContent = annualIncome.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        });
+
+        // Initialize annual income display on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const monthlyIncomeInput = document.querySelector('input[name="MonthlyIncome"]');
+            if (monthlyIncomeInput && monthlyIncomeInput.value) {
+                monthlyIncomeInput.dispatchEvent(new Event('input'));
+            }
+        });
+    </script>
+</body>
+
+</html>

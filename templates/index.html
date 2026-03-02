@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPA Risk Predictor | Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> NPA Risk Predictor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">
+                            <i class="fas fa-calculator"></i> Predict
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Predict Non-Performing Assets with AI</h1>
+                    <p class="lead mb-4">Advanced machine learning system to identify high-risk loans and prevent
+                        potential defaults before they happen.</p>
+                    <div class="d-flex gap-3">
+                        <a href="/predict" class="btn btn-lg btn-warning">
+                            <i class="fas fa-play-circle"></i> Start Prediction
+                        </a>
+                        <a href="#features" class="btn btn-lg btn-outline-light">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                            alt="Financial Analytics" class="img-fluid rounded shadow">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Why Choose Our NPA Predictor?</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-brain fa-3x text-primary"></i>
+                            </div>
+                            <h4 class="card-title">AI-Powered Analysis</h4>
+                            <p class="card-text">Uses machine learning algorithms trained on thousands of loan records
+                                to predict default probability with high accuracy.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-chart-line fa-3x text-success"></i>
+                            </div>
+                            <h4 class="card-title">Real-time Risk Scoring</h4>
+                            <p class="card-text">Instant risk assessment with detailed scoring and actionable
+                                recommendations for each loan application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-shield-alt fa-3x text-danger"></i>
+                            </div>
+                            <h4 class="card-title">Risk Mitigation</h4>
+                            <p class="card-text">Identify potential NPAs early and implement preventive measures to
+                                protect your portfolio.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">How It Works</h2>
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="step-card text-center">
+                        <div class="step-number">1</div>
+                        <h5>Enter Loan Details</h5>
+                        <p>Fill in borrower information, financial data, and loan terms</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="step-card text-center">
+                        <div class="step-number">2</div>
+                        <h5>AI Analysis</h5>
+                        <p>Our model analyzes 20+ risk factors in real-time</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="step-card text-center">
+                        <div class="step-number">3</div>
+                        <h5>Get Risk Score</h5>
+                        <p>Receive a comprehensive risk assessment with probability score</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="step-card text-center">
+                        <div class="step-number">4</div>
+                        <h5>Take Action</h5>
+                        <p>Make informed decisions based on AI-powered insights</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="mb-4">Ready to Reduce Your NPAs?</h2>
+            <p class="lead mb-4">Start predicting loan defaults before they happen</p>
+            <a href="/predict" class="btn btn-light btn-lg">
+                <i class="fas fa-rocket"></i> Start Predicting Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt"></i> NPA Risk Predictor</h5>
+                    <p>AI-powered solution for predicting non-performing assets and reducing credit risk.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Home</a></li>
+                        <li><a href="/predict" class="text-white">Predict</a></li>
+                        <li><a href="/dashboard" class="text-white">Dashboard</a></li>
+                        <li><a href="/api/predict" class="text-white">API</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2024 NPA Risk Predictor. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>
